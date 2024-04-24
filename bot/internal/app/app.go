@@ -59,7 +59,6 @@ func (b *Bot) setListBotCommands(ctx context.Context) {
 }
 
 func (b *Bot) SetHandlers(ctx context.Context) {
-	//TODO: implementation of registaring the commands for the bot
 	startCmd := commands.Start(b.logger, b.services.Profile)
 	b.Instance.RegisterHandler(bot.HandlerTypeMessageText, "/start", bot.MatchTypeExact, startCmd)
 
