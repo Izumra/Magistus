@@ -1,5 +1,4 @@
 include .env
-export
 
 SHELL:=/usr/bin/bash
 

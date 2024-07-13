@@ -63,6 +63,7 @@ func CreateForecast(
 				_, err := b.SendMessage(ctx, params)
 				if err != nil {
 					logger.Info("Message was't sended", slog.Any("cause", err))
+					return
 				}
 				close(cordsChan)
 			},
@@ -144,34 +145,35 @@ func CreateForecast(
 		}
 
 		var sendedMessage *models.Message
-		messageParamsViewIterpritation := &bot.SendMessageParams{
+		messageParamsViewForecast := &bot.SendMessageParams{
 			ChatID:    update.CallbackQuery.From.ID,
 			ParseMode: "HTML",
 		}
 		for i := 0; i < len(messages)-1; i++ {
 
-			messageParamsViewIterpritation.Text = messages[i]
-			sendedMessage, err = b.SendMessage(ctx, messageParamsViewIterpritation)
+			messageParamsViewForecast.Text = messages[i]
+			sendedMessage, err = b.SendMessage(ctx, messageParamsViewForecast)
 			if err != nil {
 				if strings.Contains(err.Error(), "Forbidden") {
 					profile.DeleteProfile(ctx, update.CallbackQuery.From.ID)
 				}
 				return
 			}
+			logger.Info("sendedMessage text", slog.String("text", sendedMessage.Text))
 		}
 
 		keyboard := make([][]models.InlineKeyboardButton, 1)
 		keyboard[0] = []models.InlineKeyboardButton{
 			{
 				Text:         "👈 Вернуться к карте",
-				CallbackData: fmt.Sprintf("AdvancedChrt: %v:deleteTo:%d", chartID, sendedMessage.ID),
+				CallbackData: fmt.Sprintf("AdvancedChrt:%v:DeleteTo:%d", chartID, sendedMessage.ID),
 			},
 		}
-		messageParamsViewIterpritation.Text = messages[len(messages)-1]
-		messageParamsViewIterpritation.ReplyMarkup = models.InlineKeyboardMarkup{
+		messageParamsViewForecast.Text = messages[len(messages)-1]
+		messageParamsViewForecast.ReplyMarkup = models.InlineKeyboardMarkup{
 			InlineKeyboard: keyboard,
 		}
-		_, err = b.SendMessage(ctx, messageParamsViewIterpritation)
+		_, err = b.SendMessage(ctx, messageParamsViewForecast)
 		if err != nil {
 			if strings.Contains(err.Error(), "Forbidden") {
 				profile.DeleteProfile(ctx, update.CallbackQuery.From.ID)

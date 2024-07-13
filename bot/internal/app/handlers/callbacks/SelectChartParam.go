@@ -105,7 +105,7 @@ func SelectChartParam(
 		keyboard[0] = []models.InlineKeyboardButton{
 			{
 				Text:         "👈 Вернуться к карте",
-				CallbackData: fmt.Sprintf("AdvancedChrt: %v:deleteTo:%d", chart.Id, mes.ID),
+				CallbackData: fmt.Sprintf("AdvancedChrt:%v:deleteTo:%d", chart.Id, mes.ID),
 			},
 		}
 		messageParamsViewIterpritation.Text = messages[len(messages)-1]

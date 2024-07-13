@@ -23,14 +23,24 @@ func CreateChart(
 	logger = logger.With(slog.String("handler", op))
 
 	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
-		IdUser := update.CallbackQuery.From.ID
+		chatId := update.CallbackQuery.Message.Message.Chat.ID
 
-		params := &bot.EditMessageTextParams{
-			ChatID:    IdUser,
+		_, err := b.DeleteMessage(ctx, &bot.DeleteMessageParams{
+			ChatID:    chatId,
 			MessageID: update.CallbackQuery.Message.Message.ID,
-			Text:      "📝 Отправьте боту название натальной карты",
+		})
+		if err != nil {
+			if strings.Contains(err.Error(), "Forbidden") {
+				profile.DeleteProfile(ctx, chatId)
+			}
+			return
 		}
-		_, err := b.EditMessageText(ctx, params)
+
+		params := &bot.SendMessageParams{
+			ChatID: chatId,
+			Text:   "📝 Отправьте боту название натальной карты",
+		}
+		_, err = b.SendMessage(ctx, params)
 		if err != nil {
 			logger.Info("Message was't sended", slog.Any("cause", err))
 			return
@@ -40,7 +50,7 @@ func CreateChart(
 		nameChan := make(chan string)
 
 		stepHandler1 := b.RegisterHandlerMatchFunc(
-			handlerMatchFunc(IdUser),
+			handlerMatchFunc(chatId),
 			func(ctx context.Context, b *bot.Bot, update *models.Update) {
 				if update.Message != nil && update.Message.Text != "" {
 					nameChan <- update.Message.Text
@@ -67,7 +77,7 @@ func CreateChart(
 		close(nameChan)
 
 		mesBeforeStep2 := &bot.SendMessageParams{
-			ChatID: IdUser,
+			ChatID: chatId,
 			Text:   "📝 Отправьте боту координаты места вашего рождения для построения натальной карты",
 		}
 		_, err = b.SendMessage(ctx, mesBeforeStep2)
@@ -80,7 +90,7 @@ func CreateChart(
 		cordsChan := make(chan *models.Location)
 
 		stepHandler2 := b.RegisterHandlerMatchFunc(
-			handlerMatchFunc(IdUser),
+			handlerMatchFunc(chatId),
 			func(ctx context.Context, b *bot.Bot, update *models.Update) {
 				if update.Message != nil && update.Message.Location != nil {
 					cordsChan <- update.Message.Location
@@ -110,7 +120,7 @@ func CreateChart(
 		mapCords := converter.ConvertCordsToMapCords(cords.Longitude, cords.Latitude)
 
 		mesBeforeStep3 := &bot.SendMessageParams{
-			ChatID: IdUser,
+			ChatID: chatId,
 			Text:   "📝 Отправьте боту дату своего рождения в формате YYYY:MM:DD HH:MM:SS",
 		}
 		_, err = b.SendMessage(ctx, mesBeforeStep3)
@@ -126,7 +136,7 @@ func CreateChart(
 		bornDateChan := make(chan time.Time)
 
 		stepHandler3 := b.RegisterHandlerMatchFunc(
-			handlerMatchFunc(IdUser),
+			handlerMatchFunc(chatId),
 			func(ctx context.Context, b *bot.Bot, update *models.Update) {
 				paramsBadDataResp := &bot.SendMessageParams{
 					ChatID: update.Message.Chat.ID,
@@ -214,19 +224,19 @@ func CreateChart(
 
 		_, err = chart.CreateChart(
 			ctx,
-			IdUser,
+			chatId,
 			nameChart,
 			bornDate,
 			mapCords,
 		)
 		if err != nil {
 			params := &bot.SendMessageParams{
-				ChatID: IdUser,
+				ChatID: chatId,
 				Text:   "✖️ Бот не смог построить натальную карту",
 			}
 			_, err := b.SendMessage(ctx, params)
 			if err != nil && strings.Contains(err.Error(), "Forbidden") {
-				profile.DeleteProfile(ctx, IdUser)
+				profile.DeleteProfile(ctx, chatId)
 			}
 		}
 
@@ -234,7 +244,7 @@ func CreateChart(
 			{{Text: "📜 Мои карты", CallbackData: "charts"}},
 		}
 		respParams := &bot.SendMessageParams{
-			ChatID: IdUser,
+			ChatID: chatId,
 			Text:   "✅ Натальная карта успешно построена",
 			ReplyMarkup: models.InlineKeyboardMarkup{
 				InlineKeyboard: keyboard,
@@ -242,7 +252,7 @@ func CreateChart(
 		}
 		_, err = b.SendMessage(ctx, respParams)
 		if err != nil && strings.Contains(err.Error(), "Forbidden") {
-			profile.DeleteProfile(ctx, IdUser)
+			profile.DeleteProfile(ctx, chatId)
 		}
 	}
 }

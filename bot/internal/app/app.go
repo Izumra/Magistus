@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"log/slog"
+	"os"
 	"regexp"
 	"syscall"
 
@@ -98,14 +99,13 @@ func (b *Bot) StartViaWebhook(ctx context.Context, url string) {
 		URL: url,
 	})
 	if err != nil {
-		logger.Error("Error while setting the webhok for the bot", err)
-		syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
-		return
+		logger.Error("Error while setting the webhok for the bot", slog.Any("err", err))
+		os.Exit(1)
 	}
 
 	go b.Instance.StartWebhook(ctx)
 
-	logger.Info("Bot has started")
+	logger.Info("Bot has started", slog.Int("pid", syscall.Getpid()))
 }
 
 func (b *Bot) StopWithWebHook(ctx context.Context) {

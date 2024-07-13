@@ -17,14 +17,24 @@ func UserCharts(
 	chart *chart.Service,
 ) bot.HandlerFunc {
 	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
-		IdUser := update.CallbackQuery.From.ID
+		chatId := update.CallbackQuery.Message.Message.Chat.ID
 
-		errParams := &bot.EditMessageTextParams{
-			ChatID:    IdUser,
+		_, err := b.DeleteMessage(ctx, &bot.DeleteMessageParams{
+			ChatID:    chatId,
 			MessageID: update.CallbackQuery.Message.Message.ID,
+		})
+		if err != nil {
+			if strings.Contains(err.Error(), "Forbidden") {
+				prof.DeleteProfile(ctx, chatId)
+			}
+			return
 		}
 
-		charts, err := prof.ListCharts(ctx, IdUser)
+		errParams := &bot.SendMessageParams{
+			ChatID: chatId,
+		}
+
+		charts, err := prof.ListCharts(ctx, chatId)
 		if err != nil {
 			if errors.Is(err, profile.ErrChartsNotFound) {
 				errParams.ReplyMarkup = models.InlineKeyboardMarkup{
@@ -35,9 +45,9 @@ func UserCharts(
 			}
 
 			errParams.Text = err.Error()
-			_, err := b.EditMessageText(ctx, errParams)
+			_, err := b.SendMessage(ctx, errParams)
 			if err != nil && strings.Contains(err.Error(), "Forbidden") {
-				prof.DeleteProfile(ctx, IdUser)
+				prof.DeleteProfile(ctx, chatId)
 			}
 		}
 
@@ -48,24 +58,23 @@ func UserCharts(
 				[]models.InlineKeyboardButton{
 					{
 						Text:         charts[i].Title,
-						CallbackData: fmt.Sprintf("AdvancedChrt: %v:deleteTo:0", charts[i].Id),
+						CallbackData: fmt.Sprintf("AdvancedChrt:%v", charts[i].Id),
 					},
 				},
 			)
 		}
 
-		params := &bot.EditMessageTextParams{
-			ChatID:    IdUser,
-			MessageID: update.CallbackQuery.Message.Message.ID,
+		params := &bot.SendMessageParams{
+			ChatID:    chatId,
 			Text:      "📜 Список ваших натальных карт получен",
 			ParseMode: models.ParseModeHTML,
 			ReplyMarkup: models.InlineKeyboardMarkup{
 				InlineKeyboard: keyboard,
 			},
 		}
-		_, err = b.EditMessageText(ctx, params)
+		_, err = b.SendMessage(ctx, params)
 		if err != nil && strings.Contains(err.Error(), "Forbidden") {
-			prof.DeleteProfile(ctx, IdUser)
+			prof.DeleteProfile(ctx, chatId)
 		}
 	}
 }

@@ -18,7 +18,7 @@ func AdvancedChrt(
 ) bot.HandlerFunc {
 	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
 		chartActionsData := strings.Split(update.CallbackQuery.Data, ":")
-		if chartActionsData[3] != "0" {
+		if len(chartActionsData) > 2 {
 			mesId, err := strconv.Atoi(chartActionsData[3])
 			if err == nil {
 				params := &bot.DeleteMessageParams{
@@ -36,7 +36,7 @@ func AdvancedChrt(
 		keyboard := [][]models.InlineKeyboardButton{
 			{{Text: "🕯 Интерпритация", CallbackData: fmt.Sprintf("InterpritationChart: %v", IdChartStr)}},
 			{{Text: "🔮 Прогноз", CallbackData: fmt.Sprintf("CreateForecast:%v", IdChartStr)}},
-			{{Text: "🌍 Просмотр карты", CallbackData: fmt.Sprintf("WatchChart: %v", IdChartStr)}},
+			{{Text: "🗑 Удалить карту", CallbackData: fmt.Sprintf("RemoveChart:%v", IdChartStr)}},
 			{{Text: "👈 Вернуться к картам", CallbackData: "charts"}},
 		}
 

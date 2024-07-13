@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,11 +37,18 @@ func main() {
 
 	bot.StartViaWebhook(ctx, cfg.Bot.Webhook)
 
-	go http.ListenAndServe(":3222", bot.Instance.WebhookHandler())
+	chanBot := make(chan error)
+	go func() {
+		chanBot <- http.ListenAndServe(":3222", bot.Instance.WebhookHandler())
+	}()
 
 	chanSignals := make(chan os.Signal, 1)
-	signal.Notify(chanSignals, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(chanSignals, os.Interrupt, syscall.SIGINT)
 
-	sign := <-chanSignals
-	logger.Info("Program was finished with signal", sign)
+	select {
+	case err := <-chanBot:
+		logger.Error("Occured an error in the bot", slog.Any("err", err))
+	case sign := <-chanSignals:
+		logger.Info("Program was finished", slog.Any("sign", sign))
+	}
 }
