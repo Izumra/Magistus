@@ -7,6 +7,12 @@ import (
 )
 
 type Chart interface {
-	AddChart(ctx context.Context, nameChart string, chartData *sotis.CreateChartResp, IdCreator int64) (int64, error)
+	AddChart(
+		ctx context.Context,
+		nameChart string,
+		chartData *sotis.CreateChartResp,
+		IdCreator int64,
+	) (int64, error)
 	UpdateInterpritation(ctx context.Context, id_chart int64, interpritation *string) error
+	DeleteChart(ctx context.Context, id_chart int64) error
 }

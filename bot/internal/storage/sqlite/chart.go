@@ -34,7 +34,14 @@ func (s *Storage) ChartById(ctx context.Context, IdChart int64) (*entity.Chart, 
 		if results.Err() != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}
-		results.Scan(&chart.Id, &chart.Query, &chart.Content, &chart.IdCreator, &chart.Title, &chart.Interpritaion)
+		results.Scan(
+			&chart.Id,
+			&chart.Query,
+			&chart.Content,
+			&chart.IdCreator,
+			&chart.Title,
+			&chart.Interpritaion,
+		)
 	}
 
 	return &chart, nil
@@ -70,7 +77,12 @@ func (s *Storage) ListChartsByIdUser(ctx context.Context, id_user int64) ([]*dto
 	return charts, nil
 }
 
-func (s *Storage) AddChart(ctx context.Context, nameChart string, chartData *sotis.CreateChartResp, IdCreator int64) (int64, error) {
+func (s *Storage) AddChart(
+	ctx context.Context,
+	nameChart string,
+	chartData *sotis.CreateChartResp,
+	IdCreator int64,
+) (int64, error) {
 	op := "storage/sqlite/ChartStorage.AddChart"
 
 	query := "insert into charts(title,query,content,id_creator,interpritation)values(?,?,?,?,?)"
@@ -79,7 +91,14 @@ func (s *Storage) AddChart(ctx context.Context, nameChart string, chartData *sot
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
 
-	rows, err := state.ExecContext(ctx, nameChart, chartData.Query, chartData.Content, IdCreator, "")
+	rows, err := state.ExecContext(
+		ctx,
+		nameChart,
+		chartData.Query,
+		chartData.Content,
+		IdCreator,
+		"",
+	)
 	if err != nil {
 		return -1, fmt.Errorf("%s: %w", op, err)
 	}
@@ -92,7 +111,11 @@ func (s *Storage) AddChart(ctx context.Context, nameChart string, chartData *sot
 	return id, nil
 }
 
-func (s *Storage) UpdateInterpritation(ctx context.Context, id_chart int64, interpritation *string) error {
+func (s *Storage) UpdateInterpritation(
+	ctx context.Context,
+	id_chart int64,
+	interpritation *string,
+) error {
 	op := "storage/sqlite/ChartStorage.UpdateInterpritation"
 
 	query := "update charts set interpritation=? where id=?"
@@ -102,6 +125,18 @@ func (s *Storage) UpdateInterpritation(ctx context.Context, id_chart int64, inte
 	}
 
 	_, err = state.ExecContext(ctx, interpritation, id_chart)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (s *Storage) DeleteChart(ctx context.Context, id_chart int64) error {
+	op := "storage/sqlite/ChartStorage.UpdateInterpritation"
+
+	query := "delete from charts where id=?"
+	_, err := s.db.ExecContext(ctx, query, id_chart)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}

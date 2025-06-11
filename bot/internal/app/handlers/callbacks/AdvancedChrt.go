@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Izumra/Magistus/bot/internal/services/chart"
-	"github.com/Izumra/Magistus/bot/internal/services/profile"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+
+	"github.com/Izumra/Magistus/bot/internal/services/chart"
+	"github.com/Izumra/Magistus/bot/internal/services/profile"
 )
 
 func AdvancedChrt(
@@ -34,16 +35,21 @@ func AdvancedChrt(
 
 		IdChartStr := strings.Trim(chartActionsData[1], " ")
 		keyboard := [][]models.InlineKeyboardButton{
-			{{Text: "🕯 Интерпритация", CallbackData: fmt.Sprintf("InterpritationChart: %v", IdChartStr)}},
-			{{Text: "🔮 Прогноз", CallbackData: fmt.Sprintf("CreateForecast:%v", IdChartStr)}},
-			{{Text: "🗑 Удалить карту", CallbackData: fmt.Sprintf("RemoveChart:%v", IdChartStr)}},
-			{{Text: "👈 Вернуться к картам", CallbackData: "charts"}},
+			{
+				{
+					Text:         "Интерпритация",
+					CallbackData: fmt.Sprintf("InterpritationChart:%v", IdChartStr),
+				},
+			},
+			{{Text: "Прогноз", CallbackData: fmt.Sprintf("CreateForecast:%v", IdChartStr)}},
+			{{Text: "Удалить карту", CallbackData: fmt.Sprintf("RemoveChart:%v", IdChartStr)}},
+			{{Text: "Вернуться к картам", CallbackData: "charts"}},
 		}
 
 		params := &bot.EditMessageTextParams{
 			ChatID:    IdUser,
 			MessageID: update.CallbackQuery.Message.Message.ID,
-			Text:      "📜 Информация о выбранной натальной карте",
+			Text:      "Информация о выбранной натальной карте",
 			ParseMode: models.ParseModeHTML,
 			ReplyMarkup: models.InlineKeyboardMarkup{
 				InlineKeyboard: keyboard,

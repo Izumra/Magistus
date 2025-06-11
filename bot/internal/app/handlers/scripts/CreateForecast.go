@@ -9,11 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
+
 	"github.com/Izumra/Magistus/bot/internal/lib/converter"
 	"github.com/Izumra/Magistus/bot/internal/services/chart"
 	"github.com/Izumra/Magistus/bot/internal/services/profile"
-	"github.com/go-telegram/bot"
-	"github.com/go-telegram/bot/models"
 )
 
 func CreateForecast(
@@ -36,7 +37,7 @@ func CreateForecast(
 		params := &bot.EditMessageTextParams{
 			ChatID:    IdUser,
 			MessageID: update.CallbackQuery.Message.Message.ID,
-			Text:      "📝 Отправьте боту координаты места вашего нахождения",
+			Text:      "Отправьте боту координаты места вашего нахождения",
 		}
 		_, err = b.EditMessageText(ctx, params)
 		if err != nil {
@@ -44,7 +45,7 @@ func CreateForecast(
 			return
 		}
 
-		//Step 1: getting current user position
+		// Step 1: getting current user position
 		cordsChan := make(chan *models.Location)
 
 		stepHandler1 := b.RegisterHandlerMatchFunc(
@@ -90,7 +91,16 @@ func CreateForecast(
 		}
 
 		timeForecast := time.Now()
-		timestamp := time.Date(timeForecast.Year(), timeForecast.Month(), timeForecast.Day(), timeForecast.Hour(), timeForecast.Minute(), timeForecast.Second(), 0, loc)
+		timestamp := time.Date(
+			timeForecast.Year(),
+			timeForecast.Month(),
+			timeForecast.Day(),
+			timeForecast.Hour(),
+			timeForecast.Minute(),
+			timeForecast.Second(),
+			0,
+			loc,
+		)
 
 		forecast, err := chart.CreateForecast(
 			ctx,
@@ -127,7 +137,6 @@ func CreateForecast(
 			currentSize := 0
 
 			for _, word := range words {
-
 				if currentSize+len(word) <= 3000 {
 					currentMessage = append(currentMessage, word)
 					currentSize += len(word)
@@ -159,13 +168,13 @@ func CreateForecast(
 				}
 				return
 			}
-			logger.Info("sendedMessage text", slog.String("text", sendedMessage.Text))
+			logger.Info("sendedMessage text", slog.String("text", forecast))
 		}
 
 		keyboard := make([][]models.InlineKeyboardButton, 1)
 		keyboard[0] = []models.InlineKeyboardButton{
 			{
-				Text:         "👈 Вернуться к карте",
+				Text:         "Вернуться к карте",
 				CallbackData: fmt.Sprintf("AdvancedChrt:%v:DeleteTo:%d", chartID, sendedMessage.ID),
 			},
 		}
@@ -180,6 +189,5 @@ func CreateForecast(
 			}
 			return
 		}
-
 	}
 }

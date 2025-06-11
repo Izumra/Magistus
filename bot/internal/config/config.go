@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 
+	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
 )
 
@@ -13,8 +14,7 @@ type Config struct {
 }
 
 type Bot struct {
-	Token   string `yaml:"token"`
-	Webhook string `yaml:"webhook"`
+	Token string `yaml:"token"`
 }
 
 type Db struct {
@@ -52,6 +52,7 @@ func fetchConfigByPath() string {
 	flag.Parse()
 
 	if configPath == "" {
+		godotenv.Load(".env")
 		configPath = os.Getenv("CONFIG_PATH")
 	}
 

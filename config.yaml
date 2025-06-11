@@ -1,0 +1,4 @@
+bot:
+  token: 6344181266:AAEALyEmfO9a3LTgXNp4qRFOZfwH95qX0PM
+db:
+  path: bot/internal/storage/sqlite/db/Magistus.db 

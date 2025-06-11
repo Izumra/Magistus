@@ -3,17 +3,17 @@ package app
 import (
 	"context"
 	"log/slog"
-	"os"
 	"regexp"
 	"syscall"
+
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 
 	"github.com/Izumra/Magistus/bot/internal/app/handlers/callbacks"
 	"github.com/Izumra/Magistus/bot/internal/app/handlers/commands"
 	"github.com/Izumra/Magistus/bot/internal/app/handlers/scripts"
 	"github.com/Izumra/Magistus/bot/internal/services/chart"
 	"github.com/Izumra/Magistus/bot/internal/services/profile"
-	"github.com/go-telegram/bot"
-	"github.com/go-telegram/bot/models"
 )
 
 type Services struct {
@@ -34,7 +34,6 @@ func New(
 ) *Bot {
 	bot, err := bot.New(
 		token,
-		bot.WithSkipGetMe(),
 	)
 	if err != nil {
 		panic(err)
@@ -64,52 +63,80 @@ func (b *Bot) SetHandlers(ctx context.Context) {
 	b.Instance.RegisterHandler(bot.HandlerTypeMessageText, "/start", bot.MatchTypeExact, startCmd)
 
 	addChartCb := scripts.CreateChart(b.logger, b.services.Profile, b.services.Chart)
-	b.Instance.RegisterHandler(bot.HandlerTypeCallbackQueryData, "createchart", bot.MatchTypeExact, addChartCb)
+	b.Instance.RegisterHandler(
+		bot.HandlerTypeCallbackQueryData,
+		"createchart",
+		bot.MatchTypeExact,
+		addChartCb,
+	)
 
 	getUserChartsCb := callbacks.UserCharts(b.services.Profile, b.services.Chart)
-	b.Instance.RegisterHandler(bot.HandlerTypeCallbackQueryData, "charts", bot.MatchTypeExact, getUserChartsCb)
+	b.Instance.RegisterHandler(
+		bot.HandlerTypeCallbackQueryData,
+		"charts",
+		bot.MatchTypeExact,
+		getUserChartsCb,
+	)
 
-	regexpAdvancedChrt := regexp.MustCompile(`AdvancedChrt: [0-9]+:deleteTo:[0-9]+`)
+	regexpAdvancedChrt := regexp.MustCompile(`AdvancedChrt:[0-9]+(:deleteTo:[0-9]+)?`)
 	advancedChrtCb := callbacks.AdvancedChrt(b.services.Profile, b.services.Chart)
-	b.Instance.RegisterHandlerRegexp(bot.HandlerTypeCallbackQueryData, regexpAdvancedChrt, advancedChrtCb)
+	b.Instance.RegisterHandlerRegexp(
+		bot.HandlerTypeCallbackQueryData,
+		regexpAdvancedChrt,
+		advancedChrtCb,
+	)
 
 	regexpCreateForecast := regexp.MustCompile(`CreateForecast:[0-9]+`)
 	createForecastCb := scripts.CreateForecast(b.logger, b.services.Profile, b.services.Chart)
-	b.Instance.RegisterHandlerRegexp(bot.HandlerTypeCallbackQueryData, regexpCreateForecast, createForecastCb)
+	b.Instance.RegisterHandlerRegexp(
+		bot.HandlerTypeCallbackQueryData,
+		regexpCreateForecast,
+		createForecastCb,
+	)
 
-	regexpInterpritationChart := regexp.MustCompile(`InterpritationChart: [0-9]+`)
+	regexpRemoveChart := regexp.MustCompile(`RemoveChart:[0-9]+`)
+	removeChartCb := callbacks.RemoveChart(b.services.Profile, b.services.Chart)
+	b.Instance.RegisterHandlerRegexp(
+		bot.HandlerTypeCallbackQueryData,
+		regexpRemoveChart,
+		removeChartCb,
+	)
+
+	regexpInterpritationChart := regexp.MustCompile(`InterpritationChart:[0-9]+`)
 	interpritaionChartCb := callbacks.InterpritaionChrt(b.services.Profile, b.services.Chart)
-	b.Instance.RegisterHandlerRegexp(bot.HandlerTypeCallbackQueryData, regexpInterpritationChart, interpritaionChartCb)
+	b.Instance.RegisterHandlerRegexp(
+		bot.HandlerTypeCallbackQueryData,
+		regexpInterpritationChart,
+		interpritaionChartCb,
+	)
 
 	regexpSelectChartParam := regexp.MustCompile(`SelectChartParam:[0-9]+:[0-9]+`)
-	interpritaionSelectChartParamCb := callbacks.SelectChartParam(b.services.Profile, b.services.Chart)
-	b.Instance.RegisterHandlerRegexp(bot.HandlerTypeCallbackQueryData, regexpSelectChartParam, interpritaionSelectChartParamCb)
+	interpritaionSelectChartParamCb := callbacks.SelectChartParam(
+		b.services.Profile,
+		b.services.Chart,
+	)
+	b.Instance.RegisterHandlerRegexp(
+		bot.HandlerTypeCallbackQueryData,
+		regexpSelectChartParam,
+		interpritaionSelectChartParamCb,
+	)
 
 	b.setListBotCommands(ctx)
 }
 
-func (b *Bot) StartViaWebhook(ctx context.Context, url string) {
-	op := "internal.bot.Bot.StartViaWebHook"
+func (b *Bot) Start(ctx context.Context) {
+	op := "internal.bot.Bot.Start"
 	logger := b.logger.With(
 		slog.String("func", op),
-		slog.String("HookURL", url),
 	)
 
-	_, err := b.Instance.SetWebhook(ctx, &bot.SetWebhookParams{
-		URL: url,
-	})
-	if err != nil {
-		logger.Error("Error while setting the webhok for the bot", slog.Any("err", err))
-		os.Exit(1)
-	}
-
-	go b.Instance.StartWebhook(ctx)
+	go b.Instance.Start(ctx)
 
 	logger.Info("Bot has started", slog.Int("pid", syscall.Getpid()))
 }
 
-func (b *Bot) StopWithWebHook(ctx context.Context) {
-	op := "internal.bot.Bot.StopWithWebHook"
+func (b *Bot) Stop(ctx context.Context) {
+	op := "internal.bot.Bot.Stop"
 	logger := b.logger.With(
 		slog.String("func", op),
 	)
@@ -118,7 +145,6 @@ func (b *Bot) StopWithWebHook(ctx context.Context) {
 		DropPendingUpdates: true,
 	})
 	if err != nil {
-		logger.Error("Occured the error while stopping the bot", err)
 		syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
 		return
 	}

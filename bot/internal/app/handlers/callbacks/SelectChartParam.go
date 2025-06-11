@@ -8,10 +8,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Izumra/Magistus/bot/internal/services/chart"
-	"github.com/Izumra/Magistus/bot/internal/services/profile"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+
+	"github.com/Izumra/Magistus/bot/internal/services/chart"
+	"github.com/Izumra/Magistus/bot/internal/services/profile"
 )
 
 func SelectChartParam(
@@ -56,7 +57,6 @@ func SelectChartParam(
 			currentSize := 0
 
 			for _, word := range words {
-
 				if currentSize+len(word) <= 3000 {
 					currentMessage = append(currentMessage, word)
 					currentSize += len(word)
@@ -104,7 +104,7 @@ func SelectChartParam(
 		keyboard := make([][]models.InlineKeyboardButton, 1)
 		keyboard[0] = []models.InlineKeyboardButton{
 			{
-				Text:         "👈 Вернуться к карте",
+				Text:         "Вернуться к карте",
 				CallbackData: fmt.Sprintf("AdvancedChrt:%v:deleteTo:%d", chart.Id, mes.ID),
 			},
 		}
@@ -119,6 +119,5 @@ func SelectChartParam(
 			}
 			return
 		}
-
 	}
 }

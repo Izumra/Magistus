@@ -7,9 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Izumra/Magistus/bot/internal/services/profile"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+
+	"github.com/Izumra/Magistus/bot/internal/services/profile"
 )
 
 func Start(
@@ -34,8 +35,8 @@ func Start(
 		}
 
 		keyboard := [][]models.InlineKeyboardButton{
-			{{Text: "🗞 Создать карту", CallbackData: "createchart"}},
-			{{Text: "📜 Мои карты", CallbackData: "charts"}},
+			{{Text: "Создать карту", CallbackData: "createchart"}},
+			{{Text: "Мои карты", CallbackData: "charts"}},
 		}
 		params := &bot.SendPhotoParams{
 			ChatID: update.Message.Chat.ID,
@@ -44,7 +45,7 @@ func Start(
 				Data:     bytes.NewReader(photo),
 			},
 			Caption: strings.ReplaceAll(
-				`💫 Привет!
+				`Привет!
 			Меня зовут Мона Мегистус, но друзья в основном обращаются ко мне просто по имени.
 			Я астролог из свободолюбивого города Мондштадт.
 			

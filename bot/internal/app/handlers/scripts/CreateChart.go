@@ -7,11 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
+
 	"github.com/Izumra/Magistus/bot/internal/lib/converter"
 	"github.com/Izumra/Magistus/bot/internal/services/chart"
 	"github.com/Izumra/Magistus/bot/internal/services/profile"
-	"github.com/go-telegram/bot"
-	"github.com/go-telegram/bot/models"
 )
 
 func CreateChart(
@@ -46,7 +47,7 @@ func CreateChart(
 			return
 		}
 
-		//Step 1: request for the name of the chart
+		// Step 1: request for the name of the chart
 		nameChan := make(chan string)
 
 		stepHandler1 := b.RegisterHandlerMatchFunc(
@@ -132,7 +133,7 @@ func CreateChart(
 		chanTimeZone := make(chan string, 1)
 		go reqForTheTimeZone(chanTimeZone, cords.Latitude, cords.Longitude)
 
-		//Step 3: request for the date of the born
+		// Step 3: request for the date of the born
 		bornDateChan := make(chan time.Time)
 
 		stepHandler3 := b.RegisterHandlerMatchFunc(
@@ -192,7 +193,9 @@ func CreateChart(
 					hour, errHconv := strconv.Atoi(dateElems[3])
 					min, errMinconv := strconv.Atoi(dateElems[4])
 					sec, errSecconv := strconv.Atoi(dateElems[5])
-					if errYconv != nil || errMonconv != nil || errDconv != nil || errHconv != nil || errMinconv != nil || errSecconv != nil {
+					if errYconv != nil || errMonconv != nil || errDconv != nil || errHconv != nil ||
+						errMinconv != nil ||
+						errSecconv != nil {
 						_, err := b.SendMessage(ctx, paramsBadDataResp)
 						if err != nil {
 							logger.Info("Message was't sended", slog.Any("cause", err))
@@ -241,11 +244,11 @@ func CreateChart(
 		}
 
 		keyboard := [][]models.InlineKeyboardButton{
-			{{Text: "📜 Мои карты", CallbackData: "charts"}},
+			{{Text: "Мои карты", CallbackData: "charts"}},
 		}
 		respParams := &bot.SendMessageParams{
 			ChatID: chatId,
-			Text:   "✅ Натальная карта успешно построена",
+			Text:   "Натальная карта успешно построена",
 			ReplyMarkup: models.InlineKeyboardMarkup{
 				InlineKeyboard: keyboard,
 			},

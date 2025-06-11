@@ -66,6 +66,10 @@ func (s *Service) GetChart(ctx context.Context, id_chart int64) (*entity.Chart, 
 	return chart, nil
 }
 
+func (s *Service) DeleteChart(ctx context.Context, id int64) error {
+	return s.chartRep.DeleteChart(ctx, id)
+}
+
 func (s *Service) CreateChart(
 	ctx context.Context,
 	IdCreator int64,
@@ -123,7 +127,6 @@ func (s *Service) CreateChart(
 		buffer,
 		&resp,
 	)
-
 	if err != nil {
 		logger.Error("Occured the error while building the chart", slog.Any("error", err))
 		return -1, ErrCreateChart
@@ -167,7 +170,10 @@ func (s *Service) CreateForecast(
 	buffer := &bytes.Buffer{}
 	form := multipart.NewWriter(buffer)
 
-	interprit := string([]byte(chart.Query)[5:]) + "|ct:1;" + fmt.Sprintf("dt:%v%v%v%v%v%v;%s;gmt:%s",
+	interprit := string(
+		[]byte(chart.Query)[5:],
+	) + "|ct:1;" + fmt.Sprintf(
+		"dt:%v%v%v%v%v%v;%s;gmt:%s",
 		strDateForecast[0:4],
 		strDateForecast[5:7],
 		strDateForecast[8:10],
@@ -244,6 +250,9 @@ func (s *Service) updateChrtInterpritaion(ctx context.Context, IdChart int64) {
 
 	err = s.chartRep.UpdateInterpritation(ctx, IdChart, &resp)
 	if err != nil {
-		logger.Error("Occured the error while generate the chart interpritation", slog.Any("error", err))
+		logger.Error(
+			"Occured the error while generate the chart interpritation",
+			slog.Any("error", err),
+		)
 	}
 }

@@ -10,3 +10,8 @@ require (
 )
 
 require github.com/mattn/go-sqlite3 v1.14.22
+
+require (
+	github.com/joho/godotenv v1.5.1 // indirect
+	k8s.io/utils v0.0.0-20241210054802-24370beab758 // indirect
+)

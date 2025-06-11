@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
 
 	"github.com/Izumra/Magistus/bot/internal/app"
 	"github.com/Izumra/Magistus/bot/internal/config"
@@ -35,20 +33,14 @@ func main() {
 
 	bot.SetHandlers(ctx)
 
-	bot.StartViaWebhook(ctx, cfg.Bot.Webhook)
-
-	chanBot := make(chan error)
-	go func() {
-		chanBot <- http.ListenAndServe(":3222", bot.Instance.WebhookHandler())
-	}()
+	bot.Start(ctx)
 
 	chanSignals := make(chan os.Signal, 1)
-	signal.Notify(chanSignals, os.Interrupt, syscall.SIGINT)
+	signal.Notify(chanSignals, os.Interrupt)
 
 	select {
-	case err := <-chanBot:
-		logger.Error("Occured an error in the bot", slog.Any("err", err))
 	case sign := <-chanSignals:
+		bot.Stop(ctx)
 		logger.Info("Program was finished", slog.Any("sign", sign))
 	}
 }
